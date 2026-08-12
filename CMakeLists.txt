@@ -13,6 +13,13 @@ find_package(OpenGL REQUIRED)
 # Common dependencies
 set(DEPS glfw GLEW::GLEW glm::glm OpenGL::GL)
 
+# Study Step 01
+add_executable(Step01 study/step01.cpp)
+target_link_libraries(Step01 PRIVATE ${DEPS})
+add_executable(Step02 study/step02.cpp)
+target_link_libraries(Step02 PRIVATE ${DEPS})
+
+
 # 2D Lensing executable
 add_executable(BlackHole2D 2D_lensing.cpp)
 target_link_libraries(BlackHole2D PRIVATE ${DEPS})
