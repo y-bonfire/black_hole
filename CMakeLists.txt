@@ -18,7 +18,8 @@ add_executable(Step01 study/step01.cpp)
 target_link_libraries(Step01 PRIVATE ${DEPS})
 add_executable(Step02 study/step02.cpp)
 target_link_libraries(Step02 PRIVATE ${DEPS})
-
+add_executable(Step04 study/step04.cpp)
+target_link_libraries(Step04 PRIVATE ${DEPS})
 
 # 2D Lensing executable
 add_executable(BlackHole2D 2D_lensing.cpp)
