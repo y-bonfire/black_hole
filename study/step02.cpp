@@ -5,20 +5,42 @@
 
 void draw()
 {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(
+        -100000000000.0,
+        100000000000.0,
+        -75000000000.0,
+        75000000000.0,
+        -1.0,
+        1.0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
     double c = 299792458.0;
     double G = 6.67430e-11;
-    double r_s = 2.0 * G * 8.54e36 / (c * c); // Schwarzschild radius for Sagittarius A
+    double r_s = 2.0 * G * 8.54e36 / (c * c);
+
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(1.0f, 0.0f, 0.0f); // Red color for the black hole
-    glVertex2f(0.0f, 0.0f);      // Center
-    for (int i = 0; i <= 100; i++)
+    //glBegin(GL_LINE_LOOP); // Use GL_LINE_LOOP for a dashed effect
+
+    glColor3f(1.0f, 0.0f, 0.0f);
+
+    glVertex2f(0.0f, 0.0f);
+
+    for (int i = 0; i <= 100; i+=1)
     {
+        //if(i%2==0) continue; // Skip every other point to create a dashed effect
         float angle = 2.0f * 3.14f * i / 100;
-        float x = r_s * cos(angle); // Radius of 0.1
+
+        float x = r_s * cos(angle);
         float y = r_s * sin(angle);
+
         glVertex2f(x, y);
     }
+
     glEnd();
 }
 
