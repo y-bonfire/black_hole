@@ -19,9 +19,16 @@ void draw()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    //光速 30万km/s 299792458 m/s 
     double c = 299792458.0;
     double G = 6.67430e-11;
-    double r_s = 2.0 * G * 8.54e36 / (c * c);
+
+    double mass = 8.54e36; // 質量 (kg)
+
+    // シュワルツシルト半径 r_s = 2GM/c^2
+    //r_s ≒ 12,700,000 km
+    // 射手座A*の質量は約4.3百万太陽質量で、シュワルツシルト半径は約12.7百万キロメートルです。
+    double r_s = 2.0 * G * mass / (c * c);
 
     glBegin(GL_TRIANGLE_FAN);
     //glBegin(GL_LINE_LOOP); // Use GL_LINE_LOOP for a dashed effect
@@ -57,7 +64,7 @@ int main()
     GLFWwindow *window = glfwCreateWindow(
         800,
         600,
-        "Black Hole Study - Step 01",
+        "Black Hole Study - Step 02",
         nullptr,
         nullptr);
 
