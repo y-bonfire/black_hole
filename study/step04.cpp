@@ -3,6 +3,12 @@
 
 #include <iostream>
 
+double point_x  = -1e11f;
+double point_y = 0.0f;
+double vector_x =  2e11f/10.0f;
+double vector_y = 0.0f;
+double dt = 0.0f;
+
 void draw()
 {
     glMatrixMode(GL_PROJECTION);
@@ -63,10 +69,22 @@ void draw()
     glVertex2f(x2, y2);
 
     glEnd();
+
+    glPointSize(5.0f);
+    glBegin(GL_POINTS);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glVertex2f(point_x, point_y);
+    dt = 1.0f / 60.0f;
+    point_x += (vector_x * dt);
+    point_y += (vector_y * dt);
+    glEnd();
 }
 
 int main()
 {
+    int nbFrames = 0;
+    double lastTime = glfwGetTime();
+
     // GLFWを初期化
     if (!glfwInit())
     {
@@ -106,6 +124,15 @@ int main()
     // ウィンドウが閉じられるまで繰り返す
     while (!glfwWindowShouldClose(window))
     {
+        double currentTime = glfwGetTime();
+        nbFrames++;
+        if( currentTime - lastTime >= 1.0 )
+        {
+            std::cout << 1000.0/double(nbFrames) << " ms/frame\n";
+            std::cout << point_x << " " << point_y << "\n";
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
 
         // 画面を背景色で消去
         glClear(GL_COLOR_BUFFER_BIT);
@@ -117,6 +144,7 @@ int main()
 
         // マウスやキーボード、閉じるボタンなどを処理
         glfwPollEvents();
+
     }
 
     // GLFWを終了
