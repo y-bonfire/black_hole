@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build and Run Step04",
+            "label": "Build and Run Step06",
             "type": "shell",
-            "command": "cmake --build build --config Debug --target Step04; if ($LASTEXITCODE -eq 0) { & './build/Debug/Step04.exe' }",
+            "command": "cmake --build build --config Debug --target Step06; if ($LASTEXITCODE -eq 0) { & './build/Debug/Step06.exe' }",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
