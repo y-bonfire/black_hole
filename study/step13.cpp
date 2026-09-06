@@ -4,6 +4,17 @@
 #include <vector>
 #include <iostream>
 
+// 光速 30万km/s 299792458 m/s
+const double c = 299792458.0;
+const double G = 6.67430e-11;
+
+const double mass = 8.54e36; // 質量 (kg)
+
+// シュワルツシルト半径 r_s = 2GM/c^2
+// r_s ≒ 12,700,000 km
+// 射手座A*の質量は約4.3百万太陽質量で、シュワルツシルト半径は約12.7百万キロメートルです。
+const double r_s = 2.0 * G * mass / (c * c);
+
 double dt = 0.0f;
 double currentTime = 0.0f;
 double previousTime = 0.0f;
@@ -24,9 +35,12 @@ public:
     double r;
     double phi;
     std::vector<Point> points;
+    bool is_dead = false;
 
     void update(double dt)
     {
+        if (is_dead)
+            return;
         position.x += velocity.x * dt;
         position.y += velocity.y * dt;
 
@@ -35,6 +49,12 @@ public:
 
         r = sqrt(position.x * position.x + position.y * position.y);
         phi = atan2(position.y, position.x);
+
+        if (r < r_s)
+        {
+            is_dead = true;
+            std::cout << "Ray has fallen into the black hole.\n";
+        }
     }
 
     void convert_to_cartesian()
@@ -97,17 +117,6 @@ void draw()
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    // 光速 30万km/s 299792458 m/s
-    double c = 299792458.0;
-    double G = 6.67430e-11;
-
-    double mass = 8.54e36; // 質量 (kg)
-
-    // シュワルツシルト半径 r_s = 2GM/c^2
-    // r_s ≒ 12,700,000 km
-    // 射手座A*の質量は約4.3百万太陽質量で、シュワルツシルト半径は約12.7百万キロメートルです。
-    double r_s = 2.0 * G * mass / (c * c);
 
     glBegin(GL_TRIANGLE_FAN);
     // glBegin(GL_LINE_LOOP); // Use GL_LINE_LOOP for a dashed effect

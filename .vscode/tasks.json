@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build and Run Step10",
+            "label": "Build and Run Step13",
             "type": "shell",
-            "command": "cmake --build build --config Debug --target Step10; if ($LASTEXITCODE -eq 0) { & './build/Debug/Step10.exe' }",
+            "command": "cmake --build build --config Debug --target Step13; if ($LASTEXITCODE -eq 0) { & './build/Debug/Step13.exe' }",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
