@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Schwarzschild Geodesic Viewer</title>
+
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: sans-serif;
+      background: #f5f5f5;
+    }
+
+    #box {
+      width: 1000px;
+      height: 700px;
+      border: 1px solid #ccc;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+<div id="box" class="jxgbox"></div>
+
+<script>
+const board = JXG.JSXGraph.initBoard('box', {
+    boundingbox: [-6, 6, 6, -6],
+    axis: true,
+    keepaspectratio: true,
+    showNavigation: false,
+    showCopyright: false
+});
+
+// -------------------------
+// parameters
+// -------------------------
+const rs = 2.0;     // Schwarzschild radius
+const h  = 0.01;    // Euler step
+const N  = 800;     // iteration count
+
+// 可視化用スケール
+const drScale    = 0.8;
+const dphiScale  = 0.8; // 実際には r*dphi を接線方向ベクトルとして描く
+
+// -------------------------
+// BH and horizon
+// -------------------------
+const O = board.create('point', [0, 0], {
+    name: 'BH',
+    fixed: true,
+    size: 3,
+    strokeColor: '#000',
+    fillColor: '#000'
+});
+
+const horizon = board.create('circle', [O, rs], {
+    strokeColor: '#000',
+    strokeWidth: 2,
+    fillColor: '#000',
+    fillOpacity: 0.12,
+    highlight: false
+});
+
+board.create('text', [rs + 0.15, 0.2, 'r_s'], {
+    fontSize: 16
+});
+
+// -------------------------
+// draggable point B
+// -------------------------
+const B = board.create('point', [1.8, 2.0], {
+    name: 'B',
+    size: 4,
+    strokeColor: '#111',
+    fillColor: '#111'
+});
+
+// 半径ベクトルの補助表示
+const rSeg = board.create('segment', [O, B], {
+    strokeColor: '#888',
+    strokeWidth: 1,
+    dash: 2
+});
+
+// -------------------------
+// draggable velocity vector tip
+// v = Vtip - B
+// -------------------------
+const Vtip = board.create('point', [2.8, 2.0], {
+    name: 'V',
+    size: 3,
+    strokeColor: '#c33',
+    fillColor: '#c33'
+});
+
+const vArrow = board.create('arrow', [B, Vtip], {
+    strokeColor: '#c33',
+    strokeWidth: 3,
+    lastArrow: true
+});
+
+board.create('text', [
+    () => (B.X() + Vtip.X()) / 2,
+    () => (B.Y() + Vtip.Y()) / 2 + 0.2,
+    'v'
+], {
+    fontSize: 16,
+    color: '#c33'
+});
+
+// -------------------------
+// helpers
+// -------------------------
+function vx() {
+    return Vtip.X() - B.X();
+}
+
+function vy() {
+    return Vtip.Y() - B.Y();
+}
+
+function currentState() {
+    const x = B.X();
+    const y = B.Y();
+
+    const r = Math.hypot(x, y);
+    const phi = Math.atan2(y, x);
+
+    const vx0 = vx();
+    const vy0 = vy();
+
+    // polar decomposition of velocity
+    const dr = vx0 * Math.cos(phi) + vy0 * Math.sin(phi);
+    const dphi = (-vx0 * Math.sin(phi) + vy0 * Math.cos(phi)) / Math.max(r, 1e-12);
+
+    const f = 1.0 - rs / r;
+
+    let E = NaN;
+    let L = NaN;
+
+    if (f > 0) {
+        const dt_dlambda = Math.sqrt(
+            (dr * dr) / (f * f) +
+            (r * r * dphi * dphi) / f
+        );
+        E = f * dt_dlambda;
+        L = r * r * dphi;
+    }
+
+    return {
+        x, y,
+        r, phi,
+        vx: vx0, vy: vy0,
+        dr, dphi,
+        f, E, L
+    };
+}
+
+// -------------------------
+// dr arrow (radial component)
+// -------------------------
+const drEnd = board.create('point', [
+    () => {
+        const s = currentState();
+        return B.X() + drScale * s.dr * Math.cos(s.phi);
+    },
+    () => {
+        const s = currentState();
+        return B.Y() + drScale * s.dr * Math.sin(s.phi);
+    }
+], {
+    visible: false,
+    withLabel: false
+});
+
+const drArrow = board.create('arrow', [B, drEnd], {
+    strokeColor: '#2a8',
+    strokeWidth: 3,
+    lastArrow: true
+});
+
+board.create('text', [
+    () => drEnd.X(),
+    () => drEnd.Y() + 0.15,
+    'dr'
+], {
+    fontSize: 16,
+    color: '#2a8'
+});
+
+// -------------------------
+// dphi arrow
+// 可視化では角速度 dphi そのものではなく
+// 接線方向の長さ r*dphi を描く
+// -------------------------
+const dphiEnd = board.create('point', [
+    () => {
+        const s = currentState();
+        const vt = s.r * s.dphi;          // tangential speed
+        const tx = -Math.sin(s.phi);      // tangential basis x
+        return B.X() + dphiScale * vt * tx;
+    },
+    () => {
+        const s = currentState();
+        const vt = s.r * s.dphi;
+        const ty = Math.cos(s.phi);       // tangential basis y
+        return B.Y() + dphiScale * vt * ty;
+    }
+], {
+    visible: false,
+    withLabel: false
+});
+
+const dphiArrow = board.create('arrow', [B, dphiEnd], {
+    strokeColor: '#36c',
+    strokeWidth: 3,
+    lastArrow: true
+});
+
+board.create('text', [
+    () => dphiEnd.X(),
+    () => dphiEnd.Y() + 0.15,
+    'dphi'
+], {
+    fontSize: 16,
+    color: '#36c'
+});
+
+// -------------------------
+// geodesic computation
+// -------------------------
+function calcGeodesic() {
+    const s0 = currentState();
+
+    let r    = s0.r;
+    let phi  = s0.phi;
+    let dr   = s0.dr;
+    let dphi = s0.dphi;
+    const E  = s0.E;
+
+    const xs = [];
+    const ys = [];
+
+    if (!(r > rs) || !isFinite(E)) {
+        return [xs, ys];
+    }
+
+    for (let i = 0; i < N; i++) {
+        xs.push(r * Math.cos(phi));
+        ys.push(r * Math.sin(phi));
+
+        const f = 1.0 - rs / r;
+
+        if (!isFinite(f) || f <= 0 || r <= rs * 1.0005) {
+            break;
+        }
+
+        const dt_dlambda = E / f;
+
+        const ddr =
+            - (rs / (2 * r * r)) * f * (dt_dlambda * dt_dlambda)
+            + (rs / (2 * r * r * f)) * (dr * dr)
+            + (r - rs) * (dphi * dphi);
+
+        const ddphi =
+            -2.0 * dr * dphi / r;
+
+        // Euler step
+        r    += dr * h;
+        phi  += dphi * h;
+        dr   += ddr * h;
+        dphi += ddphi * h;
+
+        if (!isFinite(r) || !isFinite(phi) || !isFinite(dr) || !isFinite(dphi)) {
+            break;
+        }
+
+        if (Math.abs(r) > 100) {
+            break;
+        }
+    }
+
+    return [xs, ys];
+}
+
+// -------------------------
+// geodesic curve
+// -------------------------
+const geodesic = board.create('curve', [[], []], {
+    strokeColor: '#111',
+    strokeWidth: 2
+});
+
+geodesic.updateDataArray = function () {
+    const data = calcGeodesic();
+    this.dataX = data[0];
+    this.dataY = data[1];
+};
+
+// -------------------------
+// info text
+// -------------------------
+board.create('text', [-5.8, 5.6, () => {
+    const s = currentState();
+    return `r = ${s.r.toFixed(6)}`;
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 5.2, () => {
+    const s = currentState();
+    return `phi = ${s.phi.toFixed(6)}`;
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 4.8, () => {
+    const s = currentState();
+    return `vx = ${s.vx.toFixed(6)}, vy = ${s.vy.toFixed(6)}`;
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 4.4, () => {
+    const s = currentState();
+    return `dr = ${s.dr.toFixed(6)}`;
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 4.0, () => {
+    const s = currentState();
+    return `dphi = ${s.dphi.toFixed(6)}`;
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 3.6, () => {
+    const s = currentState();
+    return isFinite(s.E) ? `E = ${s.E.toFixed(6)}` : 'E = undefined';
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 3.2, () => {
+    const s = currentState();
+    return isFinite(s.L) ? `L = ${s.L.toFixed(6)}` : 'L = undefined';
+}], { fontSize: 16 });
+
+board.create('text', [-5.8, 2.6,
+    '※ dphi の矢印は可視化のため r*dphi を接線方向に描画'
+], {
+    fontSize: 14,
+    color: '#555'
+});
+
+// -------------------------
+// refresh
+// -------------------------
+B.on('drag', () => board.update());
+Vtip.on('drag', () => board.update());
+
+board.update();
+
+</script>
+</body>
+</html>
